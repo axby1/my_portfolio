@@ -685,7 +685,9 @@ h4 {
 
 #fh5co-started {
   border-bottom: none;
-  min-height: 70vh;
+  min-height: 55vh;
+  padding: 5rem 0;
+  margin-top: 3rem;
   display: flex;
   align-items: center;
 }
@@ -1902,7 +1904,6 @@ html {
   #fh5co-header .header-content {
     padding: 70px 15px 15px;
   }
-  
   .container {
     padding-left: 20px;
     padding-right: 20px;

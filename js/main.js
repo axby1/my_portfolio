@@ -132,7 +132,7 @@
 		};
 
 		$(window).on('scroll', function() {
-			var scrollPos = $(window).scrollTop() + 120;
+			var viewCenter = $(window).scrollTop() + ($(window).height() / 2);
 			var matched = false;
 
 			for (var i = 0; i < sectionIds.length; i++) {
@@ -140,25 +140,13 @@
 				var section = $(id);
 				if (!section.length) continue;
 
-				var top = section.offset().top - 150;
+				var top = section.offset().top;
 				var bottom = top + section.outerHeight();
 
-				if (scrollPos >= top && scrollPos < bottom) {
+				if (viewCenter >= top && viewCenter < bottom) {
 					setActiveLink(id);
 					matched = true;
 					break;
-				}
-			}
-
-			// if nothing matched yet but we've passed the contact section top, highlight contact
-			if (!matched) {
-				var contactSection = $(sectionIds[sectionIds.length - 1]);
-				if (contactSection.length) {
-					var contactTop = contactSection.offset().top - 160;
-					if (scrollPos >= contactTop) {
-						setActiveLink(sectionIds[sectionIds.length - 1]);
-						matched = true;
-					}
 				}
 			}
 
