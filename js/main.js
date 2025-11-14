@@ -36,7 +36,9 @@
 
 	// Parallax
 	var parallax = function() {
-		$(window).stellar();
+		if ($(window).width() > 768) {
+			$(window).stellar();
+		}
 	};
 
 	var contentWayPoint = function() {
@@ -103,31 +105,190 @@
 	
 	};
 
-	var pieChart = function() {
-		$('.chart').easyPieChart({
-			scaleColor: false,
-			lineWidth: 4,
-			lineCap: 'butt',
-			barColor: '#FF9000',
-			trackColor:	"#f5f5f5",
-			size: 160,
-			animate: 1000
+	// Smooth scrolling for navigation
+	var smoothScroll = function() {
+		$('#mainNavbar a[href^="#"]').on('click', function(e) {
+			var target = $(this.getAttribute('href'));
+			if (target.length) {
+				e.preventDefault();
+				$('html, body').stop().animate({
+					scrollTop: target.offset().top - 80
+				}, 800, 'easeInOutExpo');
+				
+				// Close mobile menu if open
+				$('.navbar-collapse').collapse('hide');
+			}
 		});
 	};
 
-	var skillsWayPoint = function() {
-		if ($('#fh5co-skills').length > 0 ) {
-			$('#fh5co-skills').waypoint( function( direction ) {
-										
-				if( direction === 'down' && !$(this.element).hasClass('animated') ) {
-					setTimeout( pieChart , 400);					
-					$(this.element).addClass('animated');
-				}
-			} , { offset: '90%' } );
-		}
+	// Active section highlighting
+	var activeSection = function() {
+		var navLinks = $('#mainNavbar .nav-link');
+		var sectionIds = ['#fh5co-header', '#fh5co-about', '#fh5co-resume', '#fh5co-skills', '#fh5co-work', '#fh5co-started'];
 
+		var setActiveLink = function(targetId) {
+			navLinks.removeClass('active');
+			$('#mainNavbar a[href="' + targetId + '"]').addClass('active');
+		};
+
+		$(window).on('scroll', function() {
+			var scrollPos = $(window).scrollTop() + 120;
+			var matched = false;
+
+			for (var i = 0; i < sectionIds.length; i++) {
+				var id = sectionIds[i];
+				var section = $(id);
+				if (!section.length) continue;
+
+				var top = section.offset().top - 150;
+				var bottom = top + section.outerHeight();
+
+				if (scrollPos >= top && scrollPos < bottom) {
+					setActiveLink(id);
+					matched = true;
+					break;
+				}
+			}
+
+			// if nothing matched yet but we've passed the contact section top, highlight contact
+			if (!matched) {
+				var contactSection = $(sectionIds[sectionIds.length - 1]);
+				if (contactSection.length) {
+					var contactTop = contactSection.offset().top - 160;
+					if (scrollPos >= contactTop) {
+						setActiveLink(sectionIds[sectionIds.length - 1]);
+						matched = true;
+					}
+				}
+			}
+
+			// final fallback near bottom of page
+			if (!matched) {
+				var nearBottom = $(window).scrollTop() + $(window).height() >= $(document).height() - 50;
+				if (nearBottom) setActiveLink(sectionIds[sectionIds.length - 1]);
+			}
+		});
+
+		// highlight immediately on load
+		setTimeout(function() {
+			var currentHash = window.location.hash || '#fh5co-header';
+			if (sectionIds.indexOf(currentHash) !== -1) {
+				setActiveLink(currentHash);
+			} else {
+				setActiveLink('#fh5co-header');
+			}
+		}, 500);
+
+		// also highlight on click for instant feedback
+		navLinks.on('click', function() {
+			var target = $(this).attr('href');
+			setActiveLink(target);
+		});
 	};
 
+	// Day/Night Mode Toggle
+	var themeToggle = function() {
+		var themeToggleBtn = $('#themeToggle');
+		var themeIcon = $('#themeIcon');
+		var body = $('body');
+		
+		// Check for saved theme preference or default to dark mode
+		var currentTheme = localStorage.getItem('theme') || 'dark';
+		
+		// Update icon based on current theme (shows what clicking will switch TO)
+		var updateIcon = function(isDark) {
+			if (isDark) {
+				themeIcon.removeClass('fa-moon').addClass('fa-sun');
+			} else {
+				themeIcon.removeClass('fa-sun').addClass('fa-moon');
+			}
+		};
+		
+		if (currentTheme === 'light') {
+			body.removeClass('dark-mode');
+			updateIcon(false);
+		} else {
+			body.addClass('dark-mode');
+			updateIcon(true);
+		}
+		
+		themeToggleBtn.on('click', function() {
+			body.toggleClass('dark-mode');
+			
+			if (body.hasClass('dark-mode')) {
+				localStorage.setItem('theme', 'dark');
+				updateIcon(true);
+			} else {
+				localStorage.setItem('theme', 'light');
+				updateIcon(false);
+			}
+		});
+	};
+
+	// Skills animation with GSAP
+	var skillsAnimation = function() {
+		if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+			gsap.registerPlugin(ScrollTrigger);
+			
+			gsap.utils.toArray('.skill-item').forEach((item, index) => {
+				gsap.fromTo(item, 
+					{
+						opacity: 0,
+						y: 50,
+						scale: 0.8
+					},
+					{
+						opacity: 1,
+						y: 0,
+						scale: 1,
+						duration: 0.6,
+						delay: index * 0.1,
+						ease: "back.out(1.7)",
+						scrollTrigger: {
+							trigger: item,
+							start: "top 85%",
+							toggleActions: "play none none none"
+						}
+					}
+				);
+			});
+		} else {
+			// Fallback for when GSAP is not loaded
+			$('#fh5co-skills').waypoint(function(direction) {
+				if (direction === 'down' && !$(this.element).hasClass('animated')) {
+					$('.skill-item').each(function(index) {
+						var $item = $(this);
+						setTimeout(function() {
+							$item.addClass('animate');
+						}, index * 100);
+					});
+					$(this.element).addClass('animated');
+				}
+			}, { offset: '85%' });
+		}
+	};
+
+	// Enhanced section animations
+	var sectionAnimations = function() {
+		if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+			gsap.utils.toArray('.animate-box').forEach((box) => {
+				gsap.fromTo(box,
+					{ opacity: 0, y: 30 },
+					{
+						opacity: 1,
+						y: 0,
+						duration: 0.8,
+						ease: "power2.out",
+						scrollTrigger: {
+							trigger: box,
+							start: "top 85%",
+							toggleActions: "play none none none"
+						}
+					}
+				);
+			});
+		}
+	};
 
 	// Loading page
 	var loaderPage = function() {
@@ -141,8 +302,23 @@
 		loaderPage();
 		fullHeight();
 		parallax();
-		// pieChart();
-		skillsWayPoint();
+		smoothScroll();
+		activeSection();
+		themeToggle();
+		
+		// Wait for GSAP to load
+		if (typeof gsap !== 'undefined') {
+			skillsAnimation();
+			sectionAnimations();
+		} else {
+			// Fallback if GSAP doesn't load
+			setTimeout(function() {
+				if (typeof gsap !== 'undefined') {
+					skillsAnimation();
+					sectionAnimations();
+				}
+			}, 1000);
+		}
 	});
 
 
